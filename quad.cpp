@@ -20,5 +20,7 @@ int main(int argc, char const *argv[]){
 	center.insert(&c);	center.insert(&d);
 	center.insert(&e);	center.insert(&f);
 
+	cout << center.find(cpoint(8,7))->m_data << endl;
+
 	return 0;
 }
