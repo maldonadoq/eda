@@ -1,131 +1,152 @@
 #ifndef _QUADTREE_H_
 #define _QUADTREE_H_
 
-#include <iostream>
+#include <fstream>
 #include "node.h"
+
+
+/*
+		N
+		|		[0]: NW 	[0]: NW
+	W --I-- E 	[1]: NE 	[1]: SE
+		|		[2]: SW
+		S 		[3]: SE	
+*/
 
 template <class N, N _d>
 class quadtree{
 private:
-	cpoint m_tlp, m_brp;
-	cnode<N,_d> *m_node;
-	quadtree<N,_d> *m_tlt, *m_trt, *m_blt, *m_brt;
+	cnode<N,_d> *m_node;	
+	quadtree<N,_d> *m_dir[4];
+	cpoint m_quad[2];	
 public:
 	quadtree(){
-		this->m_tlp = cpoint(0,0);
-		this->m_brp = cpoint(0,0);
+		this->m_quad[0] = cpoint(0,0);
+		this->m_quad[1] = cpoint(0,0);
 		this->m_node = NULL;		
-		this->m_tlt = NULL;
-		this->m_trt = NULL;
-		this->m_blt = NULL;
-		this->m_brt = NULL;
+		this->m_dir[0] = NULL;	this->m_dir[1] = NULL;
+		this->m_dir[2] = NULL;	this->m_dir[3] = NULL;
 	}
 
 	quadtree(cpoint _tl, cpoint _br){
-		this->m_tlp = _tl;
-		this->m_brp = _br;
+		this->m_quad[0] = _tl;
+		this->m_quad[1] = _br;
 		this->m_node = NULL;		
-		this->m_tlt = NULL;
-		this->m_trt = NULL;
-		this->m_blt = NULL;
-		this->m_brt = NULL;
+		this->m_dir[0] = NULL;	this->m_dir[1] = NULL;
+		this->m_dir[2] = NULL;	this->m_dir[3] = NULL;
 	}
 
 	void insert(cnode<N,_d>*);
-	cnode<N,_d>* search(cpoint);
-	bool inboundary(cpoint);
+	cnode<N,_d>* find(cpoint);
+	//void rdle(string);
+	bool inside(cpoint);
 	~quadtree(){	};	
 };
+
+template <class N, N _d>
+bool quadtree<N,_d>::inside(cpoint p){
+    return ((p.x>=m_quad[0].x and p.x <= m_quad[1].x) and
+        (p.y>=m_quad[0].y and p.y<=m_quad[1].y));
+}
 
 template<class N, N _d>
 void quadtree<N,_d>::insert(cnode<N,_d> *node){
 	if (node == NULL) return;
-	if (!inboundary(node->m_ps)) return;
+	if (!inside(node->m_ps)) return;
 
-	if(abs(this->m_tlp.x-this->m_brp.x)<=1 &&
-		abs(this->m_tlp.y-this->m_brp.y)<=1){
+	if(abs(this->m_quad[0].x-this->m_quad[1].x)<=1 and
+		abs(this->m_quad[0].y-this->m_quad[1].y)<=1){
 		if (m_node == NULL)	m_node = node;
 		return;
 	}
 
-	if (((this->m_tlp.x + this->m_brp.x)/2)>=node->m_ps.x){
-		//this->m_tlt
-		if (((this->m_tlp.y + this->m_brp.y)/2)>= node->m_ps.y){
-			if (this->m_tlt == NULL)
-				this->m_tlt = new quadtree<N,_d>(
-					cpoint(this->m_tlp.x, this->m_tlp.y),
-					cpoint((this->m_tlp.x + this->m_brp.x)/2,
-						(this->m_tlp.y + this->m_brp.y)/2));
-			this->m_tlt->insert(node);
+	if (((this->m_quad[0].x + this->m_quad[1].x)/2)>=node->m_ps.x){
+		//NW
+		if (((this->m_quad[0].y + this->m_quad[1].y)/2)>= node->m_ps.y){
+			if (this->m_dir[0] == NULL)
+				this->m_dir[0] = new quadtree<N,_d>(
+					cpoint(this->m_quad[0].x, this->m_quad[0].y),
+					cpoint((this->m_quad[0].x + this->m_quad[1].x)/2,
+						(this->m_quad[0].y + this->m_quad[1].y)/2));
+			this->m_dir[0]->insert(node);
 		}
 
-		//this->m_blt
+		//SW
 		else{
-			if(this->m_blt == NULL)
-				this->m_blt = new quadtree<N,_d>(
-					cpoint(this->m_tlp.x, (this->m_tlp.y + this->m_brp.y)/2),
-					cpoint((this->m_tlp.x + this->m_brp.x)/2, this->m_brp.y));
-			this->m_blt->insert(node);
+			if(this->m_dir[2] == NULL)
+				this->m_dir[2] = new quadtree<N,_d>(
+					cpoint(this->m_quad[0].x, (this->m_quad[0].y + this->m_quad[1].y)/2),
+					cpoint((this->m_quad[0].x + this->m_quad[1].x)/2, this->m_quad[1].y));
+			this->m_dir[2]->insert(node);
 		}
 	}
 	else{
-		//this->m_trt
-		if ((this->m_tlp.y + this->m_brp.y) / 2 >= node->m_ps.y){
-			if (this->m_trt == NULL)
-				this->m_trt = new quadtree<N,_d>(
-					cpoint((this->m_tlp.x + this->m_brp.x)/2, this->m_tlp.y),
-					cpoint(this->m_brp.x, (this->m_tlp.y + this->m_brp.y)/2));
-			this->m_trt->insert(node);
+		//NE
+		if ((this->m_quad[0].y + this->m_quad[1].y) / 2 >= node->m_ps.y){
+			if (this->m_dir[1] == NULL)
+				this->m_dir[1] = new quadtree<N,_d>(
+					cpoint((this->m_quad[0].x + this->m_quad[1].x)/2, this->m_quad[0].y),
+					cpoint(this->m_quad[1].x, (this->m_quad[0].y + this->m_quad[1].y)/2));
+			this->m_dir[1]->insert(node);
 		}
 
-		//this->m_brt
+		//SE
 		else{
-			if (this->m_brt == NULL)
-				this->m_brt = new quadtree<N,_d>(
-					cpoint((this->m_tlp.x + this->m_brp.x)/2, (this->m_tlp.y + this->m_brp.y)/2),
-					cpoint(this->m_brp.x, this->m_brp.y));
-			this->m_brt->insert(node);
+			if (this->m_dir[3] == NULL)
+				this->m_dir[3] = new quadtree<N,_d>(
+					cpoint((this->m_quad[0].x + this->m_quad[1].x)/2, (this->m_quad[0].y + this->m_quad[1].y)/2),
+					cpoint(this->m_quad[1].x, this->m_quad[1].y));
+			this->m_dir[3]->insert(node);
 		}
 	}
 }
 
 template<class N, N _d>
-cnode<N,_d>* quadtree<N,_d>::search(cpoint p){
-	//if (!inboundary(p)) return new cnode<N,_d>();
-	if (!inboundary(p)) return NULL;
+cnode<N,_d>* quadtree<N,_d>::find(cpoint p){
+	//if (!inside(p)) return new cnode<N,_d>();
+	if (!inside(p)) return NULL;
 	if (m_node != NULL)	return m_node;
 
-	if ((this->m_tlp.x + this->m_brp.x)/2 >= p.x){
-		//this->m_tlt
-		if ((this->m_tlp.y + this->m_brp.y)/2 >= p.y){
-			if (this->m_tlt == NULL)	return NULL;
-			return this->m_tlt->search(p);
+	if ((this->m_quad[0].x + this->m_quad[1].x)/2 >= p.x){
+		//NW
+		if ((this->m_quad[0].y + this->m_quad[1].y)/2 >= p.y){
+			if (this->m_dir[0] == NULL)	return NULL;
+			return this->m_dir[0]->find(p);
 		}
-		//this->m_blt
+		//SW
 		else{
-			if (this->m_blt == NULL)	return NULL;
-			return this->m_blt->search(p);
+			if (this->m_dir[2] == NULL)	return NULL;
+			return this->m_dir[2]->find(p);
 		}
 	}
 	else{
-		//this->m_trt
-		if ((this->m_tlp.y + this->m_brp.y)/2 >= p.y){
-			if (this->m_trt == NULL)	return NULL;
-			return this->m_trt->search(p);
+		//NE
+		if ((this->m_quad[0].y + this->m_quad[1].y)/2 >= p.y){
+			if (this->m_dir[1] == NULL)	return NULL;
+			return this->m_dir[1]->find(p);
 		}
-		//this->m_brt
+		//SE
 		else{
-			if (this->m_brt == NULL)	return NULL;
-			return this->m_brt->search(p);
+			if (this->m_dir[3] == NULL)	return NULL;
+			return this->m_dir[3]->find(p);
 		}
 	}
 }
 
-template <class T, T _d>
-bool quadtree<T,_d>::inboundary(cpoint p){
-    return (p.x >= m_tlp.x and p.x <= m_brp.x and
-        p.y >= m_tlp.y and p.y <= m_brp.y);
-}
+/*template<class N, N _d>
+void quadtree<N,_d>::rdfile(string filename){
+	string lat,lon;
+	ifstream file(filename);
+	if(!file.is_open())	cout << "error! cvs wrong!!" << endl;
 
+	while(file.good()){
+		getline(file,lat,',');
+		getline(file,lon,'\n');
+
+		cout << lat << " " << lon << endl;
+	}
+
+	file.close();
+}*/
 
 #endif
