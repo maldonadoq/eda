@@ -2,18 +2,25 @@
 #define _NODE_H_
 
 #include "data.h"
+#include <list>
 
-template <class T, T _d>
+using namespace std;
+
+template <class T>
 class cnode{
 public:
-	cpoint m_ps;
-	T m_data;
-	cnode(cpoint _mps, T _data){
-		this->m_ps = _mps;
-		this->m_data = _data;
-	}
+	list<cdata<T> *> m_list;
+	cnode(){	};
 
-	cnode(){	this->m_data = _d;	}
+	void add_data(cdata<T> *a){	this->m_list.push_back(a);	}
+	unsigned size(){	return this->m_list.size();	}
+	friend ostream& operator<< (ostream & out, cnode<T> &c){		
+		typename list<cdata<T> *>::iterator it;
+    	for(it=c.m_list.begin(); it!=c.m_list.end(); it++)
+    		out << "\t" << *(*it) << "\n";
+		return out;
+   	}
+	//cnode(){	this->m_data = NULL;	}
 	~cnode(){	};
 };
 
