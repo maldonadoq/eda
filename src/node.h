@@ -20,6 +20,18 @@ public:
     		out << "\t" << *(*it) << "\n";
 		return out;
    	}
+
+   	void printxy(){
+   		typename list<cdata<T> *>::iterator it;
+   		cout << "x = [";
+    	for(it=m_list.begin(); it!=m_list.end(); it++)
+    		cout << setprecision(pre) << (*(*it)).m_ps.x << ",";
+    	cout << "]\n";
+    	cout << "y = [";
+    	for(it=m_list.begin(); it!=m_list.end(); it++)
+    		cout << setprecision(pre) << (*(*it)).m_ps.y << ",";
+    	cout << "]\n";
+   	}
 	//cnode(){	this->m_data = NULL;	}
 	~cnode(){	};
 };

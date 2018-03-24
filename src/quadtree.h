@@ -42,6 +42,7 @@ public:
 
 	void insert(cdata<D> *);
 	cnode<D>* find(cpoint);
+	void qtmax();
 	void rdfile(string);
 	void qtprint();
 	bool inside(cpoint);
@@ -116,11 +117,13 @@ cnode<D>* quadtree<N,D>::find(cpoint p){
 	if((this->m_quad[0].x + this->m_quad[1].x)/2 >= p.x){
 		//NW
 		if ((this->m_quad[0].y + this->m_quad[1].y)/2 >= p.y){
+			cout << "NW->";
 			if(this->m_dir[0] == NULL)	return NULL;
 			return this->m_dir[0]->find(p);
 		}
 		//SW
 		else{
+			cout << "SW->";
 			if(this->m_dir[2] == NULL)	return NULL;
 			return this->m_dir[2]->find(p);
 		}
@@ -128,11 +131,13 @@ cnode<D>* quadtree<N,D>::find(cpoint p){
 	else{
 		//NE
 		if((this->m_quad[0].y + this->m_quad[1].y)/2 >= p.y){
+			cout << "NE->";
 			if(this->m_dir[1] == NULL)	return NULL;
 			return this->m_dir[1]->find(p);
 		}
 		//SE
 		else{
+			cout << "SE->";
 			if (this->m_dir[3] == NULL)	return NULL;
 			return this->m_dir[3]->find(p);
 		}
@@ -148,13 +153,37 @@ void quadtree<N,D>::rdfile(string filename){
 		return;
 	}
 
+	getline(file,tmp,'\n');		//RowName
 	while(file.good()){
-		getline(file,nam,',');		//Country
+		/*getline(file,nam,',');		//Country
 		getline(file,tmp,',');		//Capital
 		getline(file,lat,',');		//Latitude
 		getline(file,lon,',');		//Longitude
 		getline(file,tmp,',');		//Code
-		getline(file,tmp,'\n');		//Continent
+		getline(file,tmp,'\n');		//Continent*/
+
+		getline(file,tmp,',');		//ID
+		getline(file,tmp,',');		//Case Number
+		getline(file,tmp,',');		//Time
+		getline(file,tmp,',');		//Block
+		getline(file,tmp,',');		//IUCR
+		getline(file,nam,',');		//Crime
+		getline(file,tmp,',');		//Description
+		getline(file,tmp,',');		//Location Desc.
+		getline(file,tmp,',');		//Arrest
+		getline(file,tmp,',');		//Domestic
+		getline(file,tmp,',');		//Beat
+		getline(file,tmp,',');		//District
+		getline(file,tmp,',');		//Ward
+		getline(file,tmp,',');		//Community
+		getline(file,tmp,',');		//FBI Code
+		getline(file,tmp,',');		//X
+		getline(file,tmp,',');		//Y
+		getline(file,tmp,',');		//Year
+		getline(file,tmp,',');		//Update
+		getline(file,lat,',');		//Latitude
+		getline(file,lon,',');		//Longitude
+		getline(file,tmp,'\n');		//Location
 
 		//cout << lat << " " << lon << " " << nam << endl;
 		insert(new cdata<D>(cpoint(stod(lat),stod(lon)),nam));
@@ -173,6 +202,19 @@ void quadtree<N,D>::qtprint(){
     	if(m_dir[i]!=NULL){
     		cout << cardinal[i] << "->";
     		m_dir[i]->qtprint();
+    	}
+}
+
+template<class N, class D>
+void quadtree<N,D>::qtmax(){
+	if(m_node->size()>0){
+    	cout << "\n[" << m_quad[0] << ":" << m_quad[1] << "]" << endl;
+    	m_node->printxy();
+    }    
+        
+    for(int i=0; i<4; i++)
+    	if(m_dir[i]!=NULL){
+    		m_dir[i]->qtmax();
     	}
 }
 
