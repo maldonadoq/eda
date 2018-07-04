@@ -1,10 +1,9 @@
 #ifndef _QUADTREE_H_
 #define _QUADTREE_H_
 
-#include "setvalue.h"
 #include <fstream>
-#include "node.h"
 #include "mmath.h"
+#include "node.h"
 
 /*
 		N
@@ -17,53 +16,57 @@
 template <class N, class D>
 class quadtree{
 private:
-	cnode<D> *m_node;	
+	qnode<D> *m_node;
 	quadtree<N,D> *m_dir[4];
-	cpoint m_quad[2];
+	qpoint m_quad[2];
 	N m_umin;
 public:
 	quadtree(){
-		this->m_quad[0] = cpoint(0,0);
-		this->m_quad[1] = cpoint(0,0);
+		this->m_quad[0] = qpoint(0,0);
+		this->m_quad[1] = qpoint(0,0);
 		this->m_umin = 1;
-		this->m_node = new cnode<D>();
+		this->m_node = new qnode<D>();
 		this->m_dir[0] = NULL;	this->m_dir[1] = NULL;
 		this->m_dir[2] = NULL;	this->m_dir[3] = NULL;
 	}
 
-	quadtree(cpoint _tl, cpoint _br, N _min){
+	quadtree(qpoint _tl, qpoint _br, N _min){
 		this->m_quad[0] = _tl;
 		this->m_quad[1] = _br;
 		this->m_umin = _min;
-		this->m_node = new cnode<D>();
+		this->m_node = new qnode<D>();
 		this->m_dir[0] = NULL;	this->m_dir[1] = NULL;
 		this->m_dir[2] = NULL;	this->m_dir[3] = NULL;
 	}
 
-	void insert(cdata<D> *);
-	cnode<D>* find(cpoint);
-	void qtmax();
+	bool inside(qpoint);	
+	void insert(qdata<D> *);	
+	qnode<D>* find(qpoint);	
+
 	void rdfile(string);
-	void qtprint();
-	bool inside(cpoint);
+	void qtsaveline();
+	void qtline();	
 	~quadtree(){	};	
 };
 
 template <class N, class D>
-bool quadtree<N,D>::inside(cpoint p){
+bool quadtree<N,D>::inside(qpoint p){
     return ((p.x>=m_quad[0].x and p.x <= m_quad[1].x) and
         (p.y>=m_quad[0].y and p.y<=m_quad[1].y));
 }
 
 template<class N, class D>
-void quadtree<N,D>::insert(cdata<D> *data){
+void quadtree<N,D>::insert(qdata<D> *data){
 	if (data == NULL) return;
 	if (!inside(data->m_ps)) return;
 	
 
 	if(absolute(this->m_quad[0].x-this->m_quad[1].x)<=m_umin and
 		absolute(this->m_quad[0].y-this->m_quad[1].y)<=m_umin){		
-		if(m_node->size()<=m_ndt)	m_node->add_data(data);
+		if(m_node->size()<=NDATA){
+			m_node->add_data(data);
+			vpoints.push_back(data->m_ps);
+		}
 		return;
 	}
 
@@ -72,8 +75,8 @@ void quadtree<N,D>::insert(cdata<D> *data){
 		if (((this->m_quad[0].y + this->m_quad[1].y)/2)>= data->m_ps.y){
 			if (this->m_dir[0] == NULL)
 				this->m_dir[0] = new quadtree<N,D>(
-					cpoint(this->m_quad[0].x, this->m_quad[0].y),
-					cpoint((this->m_quad[0].x + this->m_quad[1].x)/2,
+					qpoint(this->m_quad[0].x, this->m_quad[0].y),
+					qpoint((this->m_quad[0].x + this->m_quad[1].x)/2,
 						(this->m_quad[0].y + this->m_quad[1].y)/2),m_umin);
 			this->m_dir[0]->insert(data);
 		}
@@ -82,8 +85,8 @@ void quadtree<N,D>::insert(cdata<D> *data){
 		else{
 			if(this->m_dir[2] == NULL)
 				this->m_dir[2] = new quadtree<N,D>(
-					cpoint(this->m_quad[0].x, (this->m_quad[0].y + this->m_quad[1].y)/2),
-					cpoint((this->m_quad[0].x + this->m_quad[1].x)/2, this->m_quad[1].y),m_umin);
+					qpoint(this->m_quad[0].x, (this->m_quad[0].y + this->m_quad[1].y)/2),
+					qpoint((this->m_quad[0].x + this->m_quad[1].x)/2, this->m_quad[1].y),m_umin);
 			this->m_dir[2]->insert(data);
 		}
 	}
@@ -92,8 +95,8 @@ void quadtree<N,D>::insert(cdata<D> *data){
 		if ((this->m_quad[0].y + this->m_quad[1].y) / 2 >= data->m_ps.y){
 			if (this->m_dir[1] == NULL)
 				this->m_dir[1] = new quadtree<N,D>(
-					cpoint((this->m_quad[0].x + this->m_quad[1].x)/2, this->m_quad[0].y),
-					cpoint(this->m_quad[1].x, (this->m_quad[0].y + this->m_quad[1].y)/2),m_umin);
+					qpoint((this->m_quad[0].x + this->m_quad[1].x)/2, this->m_quad[0].y),
+					qpoint(this->m_quad[1].x, (this->m_quad[0].y + this->m_quad[1].y)/2),m_umin);
 			this->m_dir[1]->insert(data);
 		}
 
@@ -101,16 +104,16 @@ void quadtree<N,D>::insert(cdata<D> *data){
 		else{
 			if (this->m_dir[3] == NULL)
 				this->m_dir[3] = new quadtree<N,D>(
-					cpoint((this->m_quad[0].x + this->m_quad[1].x)/2, (this->m_quad[0].y + this->m_quad[1].y)/2),
-					cpoint(this->m_quad[1].x, this->m_quad[1].y),m_umin);
+					qpoint((this->m_quad[0].x + this->m_quad[1].x)/2, (this->m_quad[0].y + this->m_quad[1].y)/2),
+					qpoint(this->m_quad[1].x, this->m_quad[1].y),m_umin);
 			this->m_dir[3]->insert(data);
 		}
 	}
 }
 
 template<class N, class D>
-cnode<D>* quadtree<N,D>::find(cpoint p){
-	//if (!inside(p)) return new cnode<D>(cpoint(0,0),"NULL");
+qnode<D>* quadtree<N,D>::find(qpoint p){
+	//if (!inside(p)) return new qnode<D>(qpoint(0,0),"NULL");
 	if(!inside(p)) return NULL;	
 	if(m_node->size()>0)	return m_node;
 
@@ -153,69 +156,53 @@ void quadtree<N,D>::rdfile(string filename){
 		return;
 	}
 
-	getline(file,tmp,'\n');		//RowName
-	while(file.good()){
-		/*getline(file,nam,',');		//Country
-		getline(file,tmp,',');		//Capital
-		getline(file,lat,',');		//Latitude
-		getline(file,lon,',');		//Longitude
-		getline(file,tmp,',');		//Code
-		getline(file,tmp,'\n');		//Continent*/
+	xmin = 500;
+    xmax = -500;
 
-		getline(file,tmp,',');		//ID
-		getline(file,tmp,',');		//Case Number
-		getline(file,tmp,',');		//Time
-		getline(file,tmp,',');		//Block
-		getline(file,tmp,',');		//IUCR
-		getline(file,nam,',');		//Crime
-		getline(file,tmp,',');		//Description
-		getline(file,tmp,',');		//Location Desc.
-		getline(file,tmp,',');		//Arrest
-		getline(file,tmp,',');		//Domestic
-		getline(file,tmp,',');		//Beat
-		getline(file,tmp,',');		//District
-		getline(file,tmp,',');		//Ward
-		getline(file,tmp,',');		//Community
-		getline(file,tmp,',');		//FBI Code
-		getline(file,tmp,',');		//X
-		getline(file,tmp,',');		//Y
-		getline(file,tmp,',');		//Year
-		getline(file,tmp,',');		//Update
+    ymin = 500;
+    ymax = -500;
+
+    double latit, longi;
+	getline(file,tmp,'\n');		//RowName
+	while(file.good()){		
+		getline(file,nam,',');		//Country	
 		getline(file,lat,',');		//Latitude
-		getline(file,lon,',');		//Longitude
-		getline(file,tmp,'\n');		//Location
+		getline(file,lon,'\n');		//Longitude
+
+		latit = stod(lat);
+		longi = stod(lon);
+
+        if(latit<xmin)    xmin = latit;
+        if(latit>xmax)    xmax = latit;
+
+        if(longi<ymin)    ymin = longi;
+        if(longi>ymax)    ymax = longi;
 
 		//cout << lat << " " << lon << " " << nam << endl;
-		insert(new cdata<D>(cpoint(stod(lat),stod(lon)),nam));
+		insert(new qdata<D>(qpoint(latit,longi),nam));
 	}
 	file.close();
 }
 
 template<class N, class D>
-void quadtree<N,D>::qtprint(){
-    if(m_node->size()>0){
-    	cout << "\n[" << m_quad[0] << ":" << m_quad[1] << "]" << endl;
-    	cout << *m_node << endl;
-    }    
-        
+void quadtree<N,D>::qtsaveline(){
+    qtline();        
     for(int i=0; i<4; i++)
     	if(m_dir[i]!=NULL){
-    		cout << cardinal[i] << "->";
-    		m_dir[i]->qtprint();
+    		m_dir[i]->qtsaveline();
     	}
 }
 
 template<class N, class D>
-void quadtree<N,D>::qtmax(){
-	if(m_node->size()>0){
-    	cout << "\n[" << m_quad[0] << ":" << m_quad[1] << "]" << endl;
-    	m_node->printxy();
-    }    
-        
-    for(int i=0; i<4; i++)
-    	if(m_dir[i]!=NULL){
-    		m_dir[i]->qtmax();
-    	}
+void quadtree<N,D>::qtline(){
+	double yt,xt;
+	yt = (m_quad[1].y+m_quad[0].y)/2;
+	xt = (m_quad[1].x+m_quad[0].x)/2;
+
+	vlines.push_back(qpoint(m_quad[0].x,yt));	
+	vlines.push_back(qpoint(m_quad[1].x,yt));	
+	vlines.push_back(qpoint(xt,m_quad[0].y));	
+	vlines.push_back(qpoint(xt,m_quad[1].y));	
 }
 
 #endif

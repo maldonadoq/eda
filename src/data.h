@@ -1,146 +1,54 @@
 #ifndef _DATA_H_
 #define _DATA_H_
 
-#include <math.h>
 #include <iostream>
-#include <iomanip>
+#include "point.h"
 
 using namespace std;
 
-// quadtree
-class cpoint{
-public:
-	double x,y;
-	cpoint(){	
-		this->x = 0;
-		this->y = 0;	
-	}
-	cpoint(double _x, double _y){
-		this->x = _x;
-		this->y = _y;
-	}
-	friend ostream& operator<< (ostream & out, const cpoint &c){
-       out << setprecision(pre) << "(" << c.x << "," << c.y << ")";	
-       return out;
-   	}
-	~cpoint(){	};
-};
-
+// data for quad-tree
 template<class T>
-class cdata{
+class qdata{
 public:
-	cpoint m_ps;
+	qpoint m_ps;
 	T m_data;
-	cdata(cpoint _mps, T _data){
+	qdata(qpoint _mps, T _data){
 		this->m_ps = _mps;
 		this->m_data = _data;
 	}
-	friend ostream& operator<< (ostream & out, const cdata &c){
+	friend ostream& operator<< (ostream & out, const qdata &c){
        out << c.m_ps << ": " << c.m_data;
        return out;
-   	}
-	~cdata(){	};
+   	}   	
+	~qdata(){	};
 };
 
-
-// point k dimentional
-template<class T>
-class kdpoint{
+template<class T, class D>
+class rdata{
 public:
-	T *m_point;
-	kdpoint(int d){
-		this->m_point = new T[d];		
-		for(int i=0; i<d; i++)
-			this->m_point[i] = (T)rand()/(T)RAND_MAX;
+	rpoint<T> m_point;
+	D m_data;
+	rdata(rpoint<T> _mpoint, D _data){
+		this->m_point = _mpoint;
+		this->m_data = _data;
 	}
-	~kdpoint(){	delete this->m_point;	}
+	~rdata(){	};
 };
 
-
-// table of kdpoint
-template<class T>
-class ctable{
+template<class T, class D>
+class rbox{
 public:
-	int m_nd, m_ndata;
-	kdpoint<T> **m_table;
-	ctable(int _nd, int _ndata){
-		this->m_nd = _nd;
-		this->m_ndata = _ndata;
-		this->m_table = new kdpoint<T> *[m_ndata];
-		for(int i=0; i<m_ndata; i++)
-			this->m_table[i] = new kdpoint<T>(m_nd);
-	}	
-
-	~ctable(){
-		delete this->m_table;
+	rdata<T,D> *p[2];
+	double dist;
+	rbox(){
+		this->p[0] = NULL;
+		this->p[1] = NULL;
+		this->dist = 0;
 	}
 
-	double min_dis();
-	double max_dis();
-	double prm_dis();
-	double mdistance(kdpoint<T>*, kdpoint<T>*);
-	void print();
+	void setmin(rdata<T,D> *p){	this->p[0] = p;	}
+	void setmax(rdata<T,D> *p){	this->p[1] = p;	}
+	void setdis(double _d){	this->dist = _d;	}
 };
-
-
-template <class T>
-double ctable<T>::mdistance(kdpoint<T> *a, kdpoint<T> *b){
-	double dis = 0;
-	for(int i=0; i<m_nd; i++)
-		dis += pow(a->m_point[i] - b->m_point[i],2);
-	dis = sqrt(dis);
-	return dis;
-}
-
-template<class T>
-double ctable<T>::min_dis(){
-	double tm,m;
-	m = mdistance(m_table[0],m_table[1]);
-
-	for(int i=0; i<m_ndata; i++){
-		for(int j=i+1; j<m_ndata; j++){
-			tm = mdistance(m_table[i],m_table[j]);
-			if(tm<m)	m = tm;
-		}
-	}
-
-	return m;
-}
-
-template<class T>
-double ctable<T>::max_dis(){
-	double tm,m;
-	m = mdistance(m_table[0],m_table[1]);
-
-	for(int i=0; i<m_ndata; i++){
-		for(int j=i+1; j<m_ndata; j++){
-			tm = mdistance(m_table[i],m_table[j]);
-			if(tm>m)	m = tm;
-		}
-	}
-
-	return m;
-}
-
-template<class T>
-double ctable<T>::prm_dis(){
-	double m = 0;
-	int tm = (m_ndata*(m_ndata-1))/2;
-	for(int i=0; i<m_ndata; i++)
-		for(int j=i+1; j<m_ndata; j++)
-			m+= mdistance(m_table[i],m_table[j]);
-
-	m = m/tm;
-	return m;
-}
-
-template <class T>
-void ctable<T>::print(){
-	for(int i=0; i<m_ndata; i++){
-		for(int j=0; j<m_nd; j++)
-			cout << m_table[i]->m_point[j] << " ";
-		cout << endl;
-	}
-}
 
 #endif
