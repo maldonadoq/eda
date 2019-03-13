@@ -16,10 +16,10 @@ public:
 	void add_data(qdata<T> *a){	this->m_list.push_back(a);	}
 	unsigned size(){	return this->m_list.size();	}
 	
-    friend ostream& operator<< (ostream & out, qnode<T> &c){		
+    friend ostream& operator<< (std::ostream & out, qnode<T> &c){		
 		typename list<qdata<T> *>::iterator it;
-    	for(it=c.m_list.begin(); it!=c.m_list.end(); it++)
-    		out << "\t" << *(*it) << "\n";
+
+    	for(it=c.m_list.begin(); it!=c.m_list.end(); it++)	out << "\t" << *(*it) << "\n";
 		return out;
    	}
 
